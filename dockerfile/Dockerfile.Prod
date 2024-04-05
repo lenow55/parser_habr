@@ -1,0 +1,20 @@
+FROM python:3.11-slim-buster as builder
+
+RUN mkdir app
+WORKDIR /app
+
+COPY poetry.lock pyproject.toml ./
+RUN pip install --no-cache-dir poetry \
+  && poetry config virtualenvs.in-project true \
+  && poetry install --without dev --no-interaction --no-ansi \
+  && rm -rf $(poetry config cache-dir)/{cache,artifacts}
+
+FROM python:3.11-slim-buster
+
+COPY --from=builder /app /app
+
+WORKDIR /app
+ENV PATH="/app/.venv/bin:${PATH}"
+
+
+COPY src/ ./src

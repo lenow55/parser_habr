@@ -1,0 +1,52 @@
+services:
+  crauler:
+    build:
+      context: .
+      dockerfile: ./dockerfile/Dockerfile.Dev
+    volumes:
+      - ./src:/app/src
+      - ./output:/app/output
+    # command:
+    #   [
+    #     "python",
+    #     "-m",
+    #     "debugpy",
+    #     "--wait-for-client",
+    #     "--listen",
+    #     "0.0.0.0:5678",
+    #     "-m",
+    #     "src.main",
+    #   ]
+    command: ["python", "-m", "src.main"]
+    ports:
+      - 5678:5678
+
+  db:
+    ports:
+      - 5444:5432
+    volumes:
+      - postgres_parse_vol_dev:/var/lib/postgresql/data/
+    environment:
+      POSTGRES_DB: debug_db
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    ports:
+      - 5080:80
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@citizix.com
+      - PGADMIN_DEFAULT_PASSWORD_FILE=/run/secrets/pgadmin_pass
+    secrets:
+      - pgadmin_pass
+    volumes:
+      - pgadmin_parse_data:/home/rundeck/server/data
+
+volumes:
+  postgres_parse_vol_dev:
+  pgadmin_parse_data:
+
+secrets:
+  db_password:
+    file: ./secrets/debug_db_password
+  pgadmin_pass:
+    file: ./secrets/debug_pgadmin_pass
