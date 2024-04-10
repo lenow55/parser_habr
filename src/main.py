@@ -1,7 +1,5 @@
-import json
 import time
 from bs4 import BeautifulSoup
-import datetime
 import asyncio
 import aiohttp
 from tqdm import tqdm
@@ -77,12 +75,6 @@ async def get_article_texts(
                 texts_table.insert().values(link=link, text=text_inside_div)
             )
             await db_session.commit()
-        # articles_res_texts.append(
-        #     {
-        #         "link": link,
-        #         "text": text_inside_div,
-        #     }
-        # )
 
     update_callback()
 
