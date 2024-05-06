@@ -68,6 +68,8 @@ async def get_article_texts(
 
         body = soup.find("div", class_="article-formatted-body")
 
+        if body is None:
+            return
         text_inside_div = body.get_text(strip=True)
 
         async with db_session_m() as db_session:
