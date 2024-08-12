@@ -2,7 +2,7 @@ import logging
 import sys
 
 
-def conf_logger(level):
+def conf_logger(level: str):
     out_level = logging.INFO
     if level == "debug":
         out_level = logging.DEBUG

@@ -1,4 +1,5 @@
 import time
+from typing import Callable
 from bs4 import BeautifulSoup
 import asyncio
 import aiohttp
@@ -14,12 +15,12 @@ from sqlalchemy import URL
 import logging
 from src.log import conf_logger
 
-conf_logger(logging.DEBUG)
+conf_logger("debug")
 sqlogger = logging.getLogger("sqlalchemy.engine")
 sqlogger.setLevel(logging.WARNING)
 
 
-articles_res_links = []
+articles_res_links: list[dict[str, str]] = []
 articles_res_texts = []
 start_time = time.time()
 
@@ -27,7 +28,9 @@ baseUrl = "https://habr.com"
 
 
 @Limiter(calls_limit=10, period=1)
-async def get_articles_links(query_params, session, page):
+async def get_articles_links(
+    query_params: str, session: aiohttp.ClientSession, page: int
+):
     headers = {
         "accept": "image/avif,image/webp,image/apng,image/svg+xml,image/,/*;q=0.8",
         "user-agent": "Mozilla/5.0",
@@ -54,7 +57,10 @@ async def get_articles_links(query_params, session, page):
 
 @Limiter(calls_limit=10, period=1)
 async def get_article_texts(
-    link, session, db_session_m: async_sessionmaker[AsyncSession], update_callback
+    link: str,
+    session: aiohttp.ClientSession,
+    db_session_m: async_sessionmaker[AsyncSession],
+    update_callback: Callable[[], None],
 ):
     headers = {
         "accept": "image/avif,image/webp,image/apng,image/svg+xml,image/,/*;q=0.8",
@@ -73,7 +79,7 @@ async def get_article_texts(
         text_inside_div = body.get_text(strip=True)
 
         async with db_session_m() as db_session:
-            await db_session.execute(
+            _ = await db_session.execute(
                 texts_table.insert().values(link=link, text=text_inside_div)
             )
             await db_session.commit()
@@ -93,7 +99,7 @@ async def gather_pages():
         "q=Postgresql Explain&target_type=posts&order=relevance",
     ]
     async with aiohttp.ClientSession() as session:
-        tasks = []
+        tasks: list[asyncio.Task[None]] = []
         for param in params_list:
             time.sleep(1)
             url = f"{baseUrl}/ru/search?{param}"
@@ -115,18 +121,18 @@ async def gather_pages():
 
             print(len(tasks))
             time.sleep(1)
-        await asyncio.gather(*tasks)
+        _ = await asyncio.gather(*tasks)
 
 
 async def gather_text_from_articles(db_session_maker: async_sessionmaker[AsyncSession]):
     async with aiohttp.ClientSession() as session:
-        tasks = []
+        tasks: list[asyncio.Task[None]] = []
         print(f"Count links {len(articles_res_links)}")
 
         pbar = tqdm(total=len(articles_res_links))
 
         def update():
-            pbar.update()
+            _ = pbar.update()
 
         for link in articles_res_links:
             task = asyncio.create_task(
@@ -134,7 +140,7 @@ async def gather_text_from_articles(db_session_maker: async_sessionmaker[AsyncSe
             )
             tasks.append(task)
 
-        await asyncio.gather(*tasks)
+        _ = await asyncio.gather(*tasks)
 
 
 async def main(config: AppSettings):
