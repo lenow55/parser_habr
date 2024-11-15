@@ -1,4 +1,4 @@
-FROM python:3.11-slim-buster as builder
+FROM python:3.12-slim-bullseye as builder
 
 RUN mkdir app
 WORKDIR /app
@@ -6,10 +6,10 @@ WORKDIR /app
 COPY poetry.lock pyproject.toml ./
 RUN pip install --no-cache-dir poetry \
   && poetry config virtualenvs.in-project true \
-  && poetry install --without dev --no-interaction --no-ansi \
+  && poetry install --with main --no-interaction --no-ansi \
   && rm -rf $(poetry config cache-dir)/{cache,artifacts}
 
-FROM python:3.11-slim-buster
+FROM python:3.12-slim-bullseye
 
 COPY --from=builder /app /app
 

@@ -1,18 +1,15 @@
-FROM python:3.11-slim-buster as builder
+FROM python:3.11-slim-bullseye as builder
 
 RUN mkdir app
 WORKDIR /app
 
-#ENV PATH="${PATH}:/root/.local/bin"
-#ENV PYTHONPATH=./
-
-# COPY poetry.lock pyproject.toml ./
-COPY pyproject.toml ./
+COPY poetry.lock pyproject.toml ./
 RUN pip install --no-cache-dir poetry \
   && poetry config virtualenvs.in-project true \
   && poetry install --with dev --no-interaction --no-ansi
 
-FROM python:3.11-slim-buster
+
+FROM python:3.11-slim-bullseye
 
 COPY --from=builder /app /app
 
@@ -24,6 +21,3 @@ ENV PYTHONUNBUFFERED=1
 ENV PATH="/app/.venv/bin:${PATH}"
 ENV PYTHONPATH=./
 RUN unset PYTHONHOME
-#ENV PYTHONPATH=./
-
-
