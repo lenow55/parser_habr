@@ -7,18 +7,6 @@ services:
       - ./src:/app/src
       - ./output:/app/output
       - .env.debug:/app/.env.debug
-    # command:
-    #   [
-    #     "python",
-    #     "-m",
-    #     "debugpy",
-    #     "--wait-for-client",
-    #     "--listen",
-    #     "0.0.0.0:5678",
-    #     "-m",
-    #     "src.main",
-    #   ]
-    command: ["python", "-m", "src.main"]
     ports:
       - 5678:5678
 
