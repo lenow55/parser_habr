@@ -6,7 +6,7 @@ services:
     volumes:
       - ./src:/app/src
       - ./output:/app/output
-      - .env.debug:/app/.env.debug
+      - ./.env.docker.debug:/app/.env.debug
       - ./links_params.json:/app/links_params.json
     ports:
       - 5678:5678
