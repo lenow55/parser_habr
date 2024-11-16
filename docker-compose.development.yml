@@ -18,24 +18,9 @@ services:
     environment:
       POSTGRES_DB: debug_db
 
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    ports:
-      - 6123:80
-    environment:
-      - PGADMIN_DEFAULT_EMAIL=admin@citizix.com
-      - PGADMIN_DEFAULT_PASSWORD_FILE=/run/secrets/pgadmin_pass
-    secrets:
-      - pgadmin_pass
-    volumes:
-      - pgadmin_parse_data:/home/rundeck/server/data
-
 volumes:
   postgres_parse_vol_dev:
-  pgadmin_parse_data:
 
 secrets:
   db_password:
     file: ./secrets/debug_db_password
-  pgadmin_pass:
-    file: ./secrets/debug_pgadmin_pass

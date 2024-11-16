@@ -36,9 +36,24 @@ services:
       retries: 5
       start_period: 80s
 
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    ports:
+      - 6123:80
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@citizix.com
+      - PGADMIN_DEFAULT_PASSWORD_FILE=/run/secrets/pgadmin_pass
+    secrets:
+      - pgadmin_pass
+    volumes:
+      - pgadmin_parse_data:/home/rundeck/server/data
+
 volumes:
   postgres_parse_vol:
+  pgadmin_parse_data:
 
 secrets:
   db_password:
     file: ./secrets/prod_db_password
+  pgadmin_pass:
+    file: ./secrets/pgadmin_pass
