@@ -1,7 +1,7 @@
 {
   "configurations": [
     {
-      "name": "Attach (remote debug)",
+      "name": "Attach docker",
       "type": "python",
       "request": "attach",
       "port": 5678,

@@ -5,11 +5,24 @@ services:
       dockerfile: ./dockerfile/Dockerfile.Dev
     volumes:
       - ./src:/app/src
-      - ./output:/app/output
       - ./.env.docker.debug:/app/.env.debug
       - ./links_params.json:/app/links_params.json
     ports:
       - 5678:5678
+    # Эта команда используется для запуска дебагера
+    # прямо внутри докера, её можно раскомментировать
+    # если хотите запустить отладку в ide
+    # но на этом проекте почему-то оно не работает
+    # точки останова ставиться не хотят никак
+    # command:
+    #   - python
+    #   - -Xfrozen_modules=off
+    #   - -m
+    #   - debugpy
+    #   - --wait-for-client
+    #   - --listen
+    #   - 0.0.0.0:5678
+    #   - src
 
   db:
     ports:
