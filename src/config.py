@@ -38,6 +38,7 @@ class AppSettings(AdvancedBaseSettings):
     db_user: str = Field(default="user")
     db_name: str = Field(default="db")
     db_password: SecretStr = Field(default="")
+    file_links_params: str = Field(default="links_params.json")
 
     @property
     def db_connect_url(self) -> str:

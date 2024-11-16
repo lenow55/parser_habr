@@ -3,6 +3,7 @@ from typing import Callable
 from bs4 import BeautifulSoup
 import asyncio
 import aiohttp
+from pydantic import TypeAdapter
 from tqdm import tqdm
 from src.limiter import Limiter
 from src.config import AppSettings
@@ -15,9 +16,13 @@ from sqlalchemy import URL
 import logging
 from src.log import conf_logger
 
-conf_logger("debug")
+# conf_logger("debug")
+conf_logger("info")
+
+
 sqlogger = logging.getLogger("sqlalchemy.engine")
 sqlogger.setLevel(logging.WARNING)
+logger = logging.getLogger("parser_" + __name__)
 
 
 articles_res_links: list[dict[str, str]] = []
@@ -52,7 +57,7 @@ async def get_articles_links(
                 }
             )
 
-        print(f"Обработал страницу: {page}; url: {url}")
+        logger.debug(f"Обработал страницу: {page}; url: {url}")
 
 
 @Limiter(calls_limit=10, period=1)
@@ -87,17 +92,12 @@ async def get_article_texts(
     update_callback()
 
 
-async def gather_pages():
+async def gather_pages(params_list: list[str]):
     headers = {
         "accept": "image/avif,image/webp,image/apng,image/svg+xml,image/,/*;q=0.8",
         "user-agent": "Mozilla/5.0",
     }
 
-    params_list = [
-        "q=CatBoost&target_type=posts&order=relevance",
-        "q=PgPool2&target_type=posts&order=relevance",
-        "q=Postgresql Explain&target_type=posts&order=relevance",
-    ]
     async with aiohttp.ClientSession() as session:
         tasks: list[asyncio.Task[None]] = []
         for param in params_list:
@@ -113,13 +113,13 @@ async def gather_pages():
                 if tmp > pages_count:
                     pages_count = tmp
 
-            print(pages_count)
+            logger.debug(pages_count)
 
             for page in range(1, pages_count + 1):
                 task = asyncio.create_task(get_articles_links(param, session, page))
                 tasks.append(task)
 
-            print(len(tasks))
+            logger.debug(len(tasks))
             time.sleep(1)
         _ = await asyncio.gather(*tasks)
 
@@ -127,7 +127,7 @@ async def gather_pages():
 async def gather_text_from_articles(db_session_maker: async_sessionmaker[AsyncSession]):
     async with aiohttp.ClientSession() as session:
         tasks: list[asyncio.Task[None]] = []
-        print(f"Count links {len(articles_res_links)}")
+        logger.debug(f"Count links {len(articles_res_links)}")
 
         pbar = tqdm(total=len(articles_res_links))
 
@@ -136,7 +136,12 @@ async def gather_text_from_articles(db_session_maker: async_sessionmaker[AsyncSe
 
         for link in articles_res_links:
             task = asyncio.create_task(
-                get_article_texts(link["link"], session, db_session_maker, update)
+                get_article_texts(
+                    link["link"],
+                    session,
+                    db_session_maker,
+                    update,
+                )
             )
             tasks.append(task)
 
@@ -158,14 +163,24 @@ async def main(config: AppSettings):
         engine, class_=AsyncSession, expire_on_commit=False
     )
 
-    await gather_pages()
+    ta = TypeAdapter(list[str])
+
+    with open(config.file_links_params, "r") as f:
+        params_json = f.read()
+
+    params_list = ta.validate_json(params_json)
+
+    await gather_pages(params_list=params_list)
 
     await gather_text_from_articles(async_sessionm)
 
+    await engine.dispose()
+
     finish_time = time.time() - start_time
-    print(f"Затраченное на работу скрипта время: {finish_time}")
+    logger.info(f"Затраченное на работу скрипта время: {finish_time}")
 
 
 if __name__ == "__main__":
     app_config = AppSettings()
+    logger.info(app_config.model_dump_json(indent=2))
     asyncio.run(main(app_config))

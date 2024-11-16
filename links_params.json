@@ -1,0 +1,5 @@
+[
+  "q=CatBoost&target_type=posts&order=relevance",
+  "q=PgPool2&target_type=posts&order=relevance",
+  "q=Postgresql Explain&target_type=posts&order=relevance"
+]
